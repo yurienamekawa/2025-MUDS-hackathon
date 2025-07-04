@@ -5,7 +5,7 @@ from firebase_admin import credentials, auth
 from fastapi import FastAPI, Depends, HTTPException, status, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, ForeignKey, func, select
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, ForeignKey, func
 from sqlalchemy.orm import sessionmaker, Session, declarative_base, relationship, joinedload
 from pydantic import BaseModel, Field
 from typing import List, Optional, Annotated
@@ -65,6 +65,8 @@ class User(Base):
     term = Column(Integer, nullable=False)
     created_at = Column(DateTime, nullable=False, default=func.now())
     posts = relationship("Post", back_populates="user")
+    comments = relationship("Comment", back_populates="user")
+    likes = relationship("Like", back_populates="user")
 
 class Topic(Base):
     __tablename__ = "topics"
@@ -81,6 +83,25 @@ class Post(Base):
     topic_id = Column(Integer, ForeignKey("topics.topic_id"), nullable=False, index=True)
     user = relationship("User", back_populates="posts")
     topic = relationship("Topic", back_populates="posts")
+    comments = relationship("Comment", back_populates="post", cascade="all, delete-orphan")
+    likes = relationship("Like", back_populates="post", cascade="all, delete-orphan")
+
+class Comment(Base):
+    __tablename__ = "comments"
+    comment_id = Column(Integer, primary_key=True, index=True)
+    post_id = Column(Integer, ForeignKey("posts.post_id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False, index=True)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    post = relationship("Post", back_populates="comments")
+    user = relationship("User", back_populates="comments")
+
+class Like(Base):
+    __tablename__ = "likes"
+    user_id = Column(Integer, ForeignKey("users.user_id"), primary_key=True)
+    post_id = Column(Integer, ForeignKey("posts.post_id"), primary_key=True)
+    user = relationship("User", back_populates="likes")
+    post = relationship("Post", back_populates="likes")
 
 # アプリケーション起動時にテーブルが存在しなければ作成
 Base.metadata.create_all(bind=engine)
@@ -94,29 +115,43 @@ class UserResponse(BaseModel):
     anonymous_id: str
     term: int
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 class TopicResponse(BaseModel):
     topic_id: int
     name: str
     class Config:
-        from_attributes = True
-
-class PostUserResponse(BaseModel):
-    user_id: int
+        orm_mode = True
+        
+class CommentUserResponse(BaseModel):
     anonymous_id: str
     term: int
     class Config:
-        from_attributes = True
+        orm_mode = True
+
+class CommentResponse(BaseModel):
+    comment_id: int
+    content: str
+    created_at: datetime.datetime
+    user: CommentUserResponse
+    class Config:
+        orm_mode = True
+
+class LikeResponse(BaseModel):
+    user_id: int
+    class Config:
+        orm_mode = True
 
 class PostResponse(BaseModel):
     post_id: int
     contents: str
     created_at: datetime.datetime
-    user: PostUserResponse
+    user: UserResponse
     topic: TopicResponse
+    comments: List[CommentResponse] = []
+    likes: List[LikeResponse] = []
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 # ==================================================
 # 4. 依存性注入 (共通処理)
@@ -133,17 +168,22 @@ def get_db():
 # Firebaseトークンを検証
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 async def get_current_firebase_user(token: Annotated[str, Depends(oauth2_scheme)]):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="無効な認証情報です。",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
     try:
-        id_token = token.split("Bearer ")[1]
+        parts = token.split()
+        if len(parts) != 2 or parts[0] != "Bearer":
+            raise credentials_exception
+        
+        id_token = parts[1]
         decoded_token = auth.verify_id_token(id_token)
         return decoded_token
     except Exception as e:
         print(f"トークン検証エラー: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="無効な認証情報です。",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise credentials_exception
 
 # ==================================================
 # 5. APIエンドポイント実装
@@ -159,9 +199,8 @@ def read_root():
 def register_user(
     term: int = Body(..., ge=1, le=7),
     anonymous_id: str = Body(...),
-    firebase_uid: str = Body(...), # フロントエンドからfirebase_uidを受け取る
+    firebase_uid: str = Body(...),
     db: Session = Depends(get_db),
-    # 認証は不要（このエンドポイント自体が認証の一部のため）
 ):
     db_user = db.query(User).filter(User.firebase_uid == firebase_uid).first()
     if db_user:
@@ -175,15 +214,9 @@ def register_user(
 
 @app.get("/api/users/me")
 def get_user_info(db: Session = Depends(get_db), firebase_user: dict = Depends(get_current_firebase_user)):
-    firebase_uid = firebase_user.get("uid")
-    user = db.query(User).filter(User.firebase_uid == firebase_uid).first()
+    user = db.query(User).filter(User.firebase_uid == firebase_user.get("uid")).first()
     if user:
-        return {
-            "is_registered": True,
-            "user_id": user.user_id,
-            "anonymous_id": user.anonymous_id,
-            "term": user.term
-        }
+        return {"is_registered": True, "user_id": user.user_id, "anonymous_id": user.anonymous_id, "term": user.term}
     return {"is_registered": False}
 
 @app.put("/api/users/me")
@@ -217,30 +250,26 @@ def get_posts(
 ):
     posts = db.query(Post).options(
         joinedload(Post.user), 
-        joinedload(Post.topic)
+        joinedload(Post.topic),
+        joinedload(Post.comments).joinedload(Comment.user),
+        joinedload(Post.likes)
     ).filter(Post.topic_id == topic_id).order_by(Post.created_at.desc()).all()
     return posts
 
-@app.get("/api/posts", response_model=List[PostResponse])
-def read_posts(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    posts = db.query(Post).options(joinedload(Post.user), joinedload(Post.topic)).offset(skip).limit(limit).all()
-    return posts
-
-@app.post("/api/posts", status_code=status.HTTP_201_CREATED)
+@app.post("/api/posts", status_code=status.HTTP_201_CREATED, response_model=PostResponse)
 def create_post(
     contents: str = Body(...),
     topic_id: int = Body(...),
-    user_id: int = Body(...),
     db: Session = Depends(get_db),
     firebase_user: dict = Depends(get_current_firebase_user)
 ):
-    # 認証されたユーザーとリクエストのユーザーIDが一致するか確認（念のため）
     user = db.query(User).filter(User.firebase_uid == firebase_user.get("uid")).first()
-    if not user or user.user_id != user_id:
-        raise HTTPException(status_code=403, detail="権限がありません。")
+    if not user:
+        raise HTTPException(status_code=404, detail="ユーザーが見つかりません。")
     
     new_post = Post(contents=contents, user_id=user.user_id, topic_id=topic_id)
     db.add(new_post)
     db.commit()
-    return {"message": "投稿が成功しました。"}
+    db.refresh(new_post)
+    return db.query(Post).options(joinedload(Post.user), joinedload(Post.topic)).filter(Post.post_id == new_post.post_id).one()
 
