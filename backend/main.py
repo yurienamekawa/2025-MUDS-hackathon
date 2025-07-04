@@ -221,6 +221,11 @@ def get_posts(
     ).filter(Post.topic_id == topic_id).order_by(Post.created_at.desc()).all()
     return posts
 
+@app.get("/api/posts", response_model=List[PostResponse])
+def read_posts(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    posts = db.query(Post).options(joinedload(Post.user), joinedload(Post.topic)).offset(skip).limit(limit).all()
+    return posts
+
 @app.post("/api/posts", status_code=status.HTTP_201_CREATED)
 def create_post(
     contents: str = Body(...),
