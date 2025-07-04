@@ -1,0 +1,173 @@
+Last login: Fri Jun 27 14:58:07 on ttys012
+🍮 igarashiayaka:~ % ls
+Applications	Documents	Library		No1
+db-design	Downloads	Movies		Pictures
+Desktop		Lecture		Music		Public
+🍮 igarashiayaka:~ % createdb 25bbs
+🍮 igarashiayaka:~ % psql 25bbs
+psql (17.4 (Homebrew))
+"help"でヘルプを表示します。
+
+25bbs=# \d
+リレーションが見つかりませんでした。
+25bbs=# \q
+🍮 igarashiayaka:~ % 
+🍮 igarashiayaka:~ % ls
+Applications	Documents	Library		No1
+db-design	Downloads	Movies		Pictures
+Desktop		Lecture		Music		Public
+🍮 igarashiayaka:~ % mkdir 2025MUDShackathon
+🍮 igarashiayaka:~ % cd 2025MUDShackathon
+🍮 igarashiayaka:~/2025MUDShackathon % code .
+🍮 igarashiayaka:~/2025MUDShackathon % python -m venv .venv
+🍮 igarashiayaka:~/2025MUDShackathon % source .venv/bin/activate
+(.venv) 🍮 igarashiayaka:~/2025MUDShackathon % code .
+(.venv) 🍮 igarashiayaka:~/2025MUDShackathon % cd
+(.venv) 🍮 igarashiayaka:~ % deactivate
+🍮 igarashiayaka:~ % ls
+2025MUDShackathon	Downloads		No1
+Applications		Lecture			Pictures
+db-design		Library			Public
+Desktop			Movies
+Documents		Music
+🍮 igarashiayaka:~ % rmdir 2025MUDShackathon
+rmdir: 2025MUDShackathon: Directory not empty
+🍮 igarashiayaka:~ % rmdir 2025MUDShackathon
+rmdir: 2025MUDShackathon: Directory not empty
+🍮 igarashiayaka:~ % rm -r 2025MUDShackathon
+🍮 igarashiayaka:~ % ls
+Applications	Documents	Library		No1
+db-design	Downloads	Movies		Pictures
+Desktop		Lecture		Music		Public
+🍮 igarashiayaka:~ % psql 25bbs               
+psql (17.4 (Homebrew))
+"help"でヘルプを表示します。
+
+25bbs=# CREATE TABLE users(
+user_id SERIAL PRIMARY KEY,
+class_year INT NOT NULL,
+random_name VARCHAR(30) NOT NULL UNIQUE,
+created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+firebae_uid VARCHAR(40) NOT NULL UNIQUE
+);
+CREATE TABLE
+25bbs=# CREATE TABLE posts(
+post_id SERIAL PRIMARY KEY,
+contents TEXT NOT NULL,
+created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+user_id INT NOT NULL REFERENCES users(user_id),
+category_id INT NOT NULL REFERENCES categories(category_id)
+);
+ERROR:  relation "categories" does not exist
+25bbs=# CREATE TABLE categories(
+category_id SERIAL PRIMARY KEY,
+name VARCHAR(50) NOT NULL UNIQUE
+);
+CREATE TABLE
+25bbs=# CREATE TABLE likes(
+like_id SERIAL PRIMARY KEY,
+user_id INT NOT NULL REFERENCES users(user_id),
+post_id INT NOT NULL REFERENCES posts(post_id),
+UNIQUE(user_id,post_id)
+);
+ERROR:  relation "posts" does not exist
+25bbs=# CREATE TABLE posts(
+post_id SERIAL PRIMARY KEY,
+contents TEXT NOT NULL,
+created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+user_id INT NOT NULL REFERENCES users(user_id),
+category_id INT NOT NULL REFERENCES categories(category_id)
+);
+CREATE TABLE
+25bbs=# CREATE TABLE likes(
+like_id SERIAL PRIMARY KEY,
+user_id INT NOT NULL REFERENCES users(user_id),
+post_id INT NOT NULL REFERENCES posts(post_id),
+UNIQUE(user_id,post_id)
+);
+CREATE TABLE
+25bbs=# CREATE TABLE badges(
+badge_id SERIAL PRIMARY KEY,
+name VARCHAR(100) NOT NULL UNIQUE
+);
+CREATE TABLE
+25bbs=# \d
+                          リレーション一覧
+ スキーマ |            名前            |   タイプ   |    所有者     
+----------+----------------------------+------------+---------------
+ public   | badges                     | テーブル   | igarashiayaka
+ public   | badges_badge_id_seq        | シーケンス | igarashiayaka
+ public   | categories                 | テーブル   | igarashiayaka
+ public   | categories_category_id_seq | シーケンス | igarashiayaka
+ public   | likes                      | テーブル   | igarashiayaka
+ public   | likes_like_id_seq          | シーケンス | igarashiayaka
+ public   | posts                      | テーブル   | igarashiayaka
+ public   | posts_post_id_seq          | シーケンス | igarashiayaka
+ public   | users                      | テーブル   | igarashiayaka
+ public   | users_user_id_seq          | シーケンス | igarashiayaka
+(10 行)
+
+25bbs=# DROP TABLE users;
+ERROR:  cannot drop table users because other objects depend on it
+DETAIL:  constraint posts_user_id_fkey on table posts depends on table users
+constraint likes_user_id_fkey on table likes depends on table users
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+25bbs=# DROP TABLE users;
+ERROR:  cannot drop table users because other objects depend on it
+DETAIL:  constraint posts_user_id_fkey on table posts depends on table users
+constraint likes_user_id_fkey on table likes depends on table users
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+25bbs=# DROP TABLE likes;
+DROP TABLE
+25bbs=# DROP TABLE posts;
+DROP TABLE
+25bbs=# DROP TABLE badges;
+DROP TABLE
+25bbs=# DROP TABLE badges;
+ERROR:  table "badges" does not exist
+25bbs=# DROP TABLE users;
+DROP TABLE
+25bbs=# \d
+                          リレーション一覧
+ スキーマ |            名前            |   タイプ   |    所有者     
+----------+----------------------------+------------+---------------
+ public   | categories                 | テーブル   | igarashiayaka
+ public   | categories_category_id_seq | シーケンス | igarashiayaka
+(2 行)
+
+25bbs=# DROP TABLE categories;
+DROP TABLE
+25bbs=# \d
+リレーションが見つかりませんでした。
+25bbs=# -- ユーザー情報を格納するテーブル
+CREATE TABLE users (
+    user_id SERIAL PRIMARY KEY,
+    firebase_uid VARCHAR(255) NOT NULL UNIQUE, -- FirebaseのUID (typo修正)
+    anonymous_id VARCHAR(30) NOT NULL UNIQUE, -- ランダムな匿名ID
+    term INT NOT NULL,                         -- 期
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- トピック（カテゴリ）を格納するテーブル
+CREATE TABLE topics (
+    topic_id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE
+);
+
+-- 投稿内容を格納するテーブル
+CREATE TABLE posts (
+    post_id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(user_id),
+    topic_id INT NOT NULL REFERENCES topics(topic_id),
+    contents TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+('BohPJ');'),opics (name) VALUESypo修正とデータ追加)意性を担保（こちらが効率的で
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+INSERT 0 10
+25bbs=# 
