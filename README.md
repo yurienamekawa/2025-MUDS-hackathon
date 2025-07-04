@@ -10,5 +10,5 @@ uvicorn main:app --reload
 ```
 npm i -g serve
 cd frontend
-serve -l 5200 .
+serve -l 5500 .
 ```
