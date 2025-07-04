@@ -167,6 +167,24 @@ def get_db():
 
 # Firebaseトークンを検証
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+# async def get_current_firebase_user(token: Annotated[str, Depends(oauth2_scheme)]):
+#     credentials_exception = HTTPException(
+#         status_code=status.HTTP_401_UNAUTHORIZED,
+#         detail="無効な認証情報です。",
+#         headers={"WWW-Authenticate": "Bearer"},
+#     )
+#     try:
+#         parts = token.split()
+#         if len(parts) != 2 or parts[0] != "Bearer":
+#             raise credentials_exception
+        
+#         id_token = parts[1]
+#         decoded_token = auth.verify_id_token(id_token)
+#         return decoded_token
+#     except Exception as e:
+#         print(f"トークン検証エラー: {e}")
+#         raise credentials_exception
+
 async def get_current_firebase_user(token: Annotated[str, Depends(oauth2_scheme)]):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -174,15 +192,14 @@ async def get_current_firebase_user(token: Annotated[str, Depends(oauth2_scheme)
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        parts = token.split()
-        if len(parts) != 2 or parts[0] != "Bearer":
-            raise credentials_exception
-        
-        id_token = parts[1]
+        print(f"受信したトークン: {token[:50]}...")
+        id_token = token
+        print(f"IDトークン（最初の50文字）: {id_token[:50]}...")
         decoded_token = auth.verify_id_token(id_token)
+        print(f"トークン検証成功: uid={decoded_token.get('uid')}")
         return decoded_token
     except Exception as e:
-        print(f"トークン検証エラー: {e}")
+        print(f"トークン検証エラー: {type(e).__name__}: {e}")
         raise credentials_exception
 
 # ==================================================
