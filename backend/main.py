@@ -48,7 +48,7 @@ except FileNotFoundError:
 
 # --- データベース設定 ---
 # あやかさんが設定した情報に合わせてください
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:name458@localhost:5434/yurienamekawa"
+SQLALCHEMY_DATABASE_URL = "postgresql://igarashiayaka:ayakapurin190127!@localhost:5432/25bbs"
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -290,3 +290,69 @@ def create_post(
     db.refresh(new_post)
     return db.query(Post).options(joinedload(Post.user), joinedload(Post.topic)).filter(Post.post_id == new_post.post_id).one()
 
+
+@app.delete("/api/posts/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_post(
+    post_id: int,
+    db: Session = Depends(get_db),
+    firebase_user: dict = Depends(get_current_firebase_user)
+):
+    user = db.query(User).filter(User.firebase_uid == firebase_user.get("uid")).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="ユーザーが見つかりません。")
+    
+    post = db.query(Post).filter(Post.post_id == post_id, Post.user_id == user.user_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="投稿が見つかりません。")
+    
+    db.delete(post)
+    db.commit()
+    return {"message": "投稿を削除しました。"}
+
+@app.post("/api/posts/{post_id}/comments", status_code=status.HTTP_201_CREATED, response_model=CommentResponse)
+def create_comment(
+    post_id: int,
+    content: str = Body(...),
+    db: Session = Depends(get_db),
+    firebase_user: dict = Depends(get_current_firebase_user)
+):
+    user = db.query(User).filter(User.firebase_uid == firebase_user.get("uid")).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="ユーザーが見つかりません。")
+    
+    post = db.query(Post).filter(Post.post_id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="投稿が見つかりません。")
+    
+    new_comment = Comment(content=content, user_id=user.user_id, post_id=post_id)
+    db.add(new_comment)
+    db.commit()
+    db.refresh(new_comment)
+    return new_comment
+
+@app.post("/api/posts/{post_id}/likes", status_code=status.HTTP_201_CREATED, response_model=LikeResponse)
+def toggle_like(
+    post_id: int,
+    db: Session = Depends(get_db),
+    firebase_user: dict = Depends(get_current_firebase_user)
+):
+    user = db.query(User).filter(User.firebase_uid == firebase_user.get("uid")).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="ユーザーが見つかりません。")
+    
+    post = db.query(Post).filter(Post.post_id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="投稿が見つかりません。")
+
+    like = db.query(Like).filter(Like.post_id == post_id, Like.user_id == user.user_id).first()
+    
+    if like:
+        db.delete(like)
+        db.commit()
+        return {"message": "いいねを取り消しました。"}
+    
+    new_like = Like(user_id=user.user_id, post_id=post_id)
+    db.add(new_like)
+    db.commit()
+    db.refresh(new_like)
+    return new_like
