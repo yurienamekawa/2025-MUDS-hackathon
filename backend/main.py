@@ -167,24 +167,6 @@ def get_db():
 
 # Firebaseトークンを検証
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-# async def get_current_firebase_user(token: Annotated[str, Depends(oauth2_scheme)]):
-#     credentials_exception = HTTPException(
-#         status_code=status.HTTP_401_UNAUTHORIZED,
-#         detail="無効な認証情報です。",
-#         headers={"WWW-Authenticate": "Bearer"},
-#     )
-#     try:
-#         parts = token.split()
-#         if len(parts) != 2 or parts[0] != "Bearer":
-#             raise credentials_exception
-        
-#         id_token = parts[1]
-#         decoded_token = auth.verify_id_token(id_token)
-#         return decoded_token
-#     except Exception as e:
-#         print(f"トークン検証エラー: {e}")
-#         raise credentials_exception
-
 async def get_current_firebase_user(token: Annotated[str, Depends(oauth2_scheme)]):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -196,7 +178,7 @@ async def get_current_firebase_user(token: Annotated[str, Depends(oauth2_scheme)
         decoded_token = auth.verify_id_token(id_token)
         return decoded_token
     except Exception as e:
-        print(f"トークン検証エラー: {type(e).__name__}: {e}")
+        print(f"トークン検証エラー: {e}")
         raise credentials_exception
 
 # ==================================================
@@ -287,7 +269,6 @@ def create_post(
     db.refresh(new_post)
     return db.query(Post).options(joinedload(Post.user), joinedload(Post.topic)).filter(Post.post_id == new_post.post_id).one()
 
-
 @app.delete("/api/posts/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(
     post_id: int,
@@ -298,21 +279,25 @@ def delete_post(
     if not user:
         raise HTTPException(status_code=404, detail="ユーザーが見つかりません。")
     
-    post = db.query(Post).filter(Post.post_id == post_id, Post.user_id == user.user_id).first()
+    post = db.query(Post).filter(Post.post_id == post_id).first()
     if not post:
         raise HTTPException(status_code=404, detail="投稿が見つかりません。")
+    
+    if post.user_id != user.user_id:
+        raise HTTPException(status_code=403, detail="この投稿を削除する権限がありません。")
     
     db.delete(post)
     db.commit()
 
+# --- コメント関連 ---
+
 @app.post("/api/posts/{post_id}/comments", status_code=status.HTTP_201_CREATED, response_model=CommentResponse)
 def create_comment(
     post_id: int,
-    content: str = Body(...),
+    content: str = Body(..., embed=True),
     db: Session = Depends(get_db),
     firebase_user: dict = Depends(get_current_firebase_user)
 ):
-    print(f"Creating comment for post_id={post_id} with content='{content}'")
     user = db.query(User).filter(User.firebase_uid == firebase_user.get("uid")).first()
     if not user:
         raise HTTPException(status_code=404, detail="ユーザーが見つかりません。")
@@ -321,15 +306,15 @@ def create_comment(
     if not post:
         raise HTTPException(status_code=404, detail="投稿が見つかりません。")
     
-    print(f"Creating comment for post_id={post_id} by user_id={user.user_id} with content='{content}'")
-
     new_comment = Comment(content=content, user_id=user.user_id, post_id=post_id)
     db.add(new_comment)
     db.commit()
     db.refresh(new_comment)
     return db.query(Comment).options(joinedload(Comment.user)).filter(Comment.comment_id == new_comment.comment_id).one()
 
-@app.post("/api/posts/{post_id}/like", status_code=status.HTTP_201_CREATED, response_model=LikeResponse)
+# --- いいね関連 ---
+
+@app.post("/api/posts/{post_id}/likes", status_code=status.HTTP_201_CREATED)
 def toggle_like(
     post_id: int,
     db: Session = Depends(get_db),
@@ -342,9 +327,9 @@ def toggle_like(
     post = db.query(Post).filter(Post.post_id == post_id).first()
     if not post:
         raise HTTPException(status_code=404, detail="投稿が見つかりません。")
-
-    existing_like = db.query(Like).filter(Like.post_id == post_id, Like.user_id == user.user_id).first()
-
+    
+    existing_like = db.query(Like).filter(Like.user_id == user.user_id, Like.post_id == post_id).first()
+    
     if existing_like:
         db.delete(existing_like)
         db.commit()
@@ -353,5 +338,4 @@ def toggle_like(
         new_like = Like(user_id=user.user_id, post_id=post_id)
         db.add(new_like)
         db.commit()
-        db.refresh(new_like)
         return {"message": "いいねしました。", "liked": True}

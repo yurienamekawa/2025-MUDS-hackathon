@@ -2,471 +2,469 @@
 <html lang="ja">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MDS Hub - 武蔵野大学DS学部</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MDS Hub - 武蔵野大学DS学部</title>
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Google Fonts (Inter) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Google Fonts (Inter) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- アイコンライブラリ (Lucide) -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- アイコンライブラリ (Lucide) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
 
-    <!-- 3Dライブラリ (Three.js) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- 3Dライブラリ (Three.js) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
-    <!-- 日付フォーマットライブラリ (Day.js) -->
-    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/relativeTime.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/locale/ja.js"></script>
-    <script>
-        dayjs.extend(window.dayjs_plugin_relativeTime);
-        dayjs.locale('ja');
-    </script>
+  <!-- 日付フォーマットライブラリ (Day.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/relativeTime.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/locale/ja.js"></script>
+  <script>
+    dayjs.extend(window.dayjs_plugin_relativeTime);
+    dayjs.locale('ja');
+  </script>
 
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
 
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
 
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
 
-        ::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 4px;
-        }
+    ::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 4px;
+    }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
 
-        .modal-open {
-            overflow: hidden;
-        }
+    .modal-open {
+      overflow: hidden;
+    }
 
-        .like-button.liked svg {
-            transform: scale(1.2);
-            transition: transform 0.2s ease-in-out;
-            fill: currentColor;
-        }
+    .like-button.liked svg {
+      transform: scale(1.2);
+      transition: transform 0.2s ease-in-out;
+      fill: currentColor;
+    }
 
-        #bg-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            background: linear-gradient(to bottom, #1e3a8a, #111827);
-        }
+    #bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      background: linear-gradient(to bottom, #1e3a8a, #111827);
+    }
 
-        #board-page {
-            background-image: linear-gradient(to top, #d2d9e0 0%, #e9f0f5 100%);
-        }
-    </style>
+    #board-page {
+      background-image: linear-gradient(to top, #d2d9e0 0%, #e9f0f5 100%);
+    }
+  </style>
 </head>
 
 <body class="bg-gray-100">
 
-    <!-- ログイン画面 -->
-    <div id="login-page" class="flex items-center justify-center min-h-screen relative overflow-hidden">
-        <canvas id="bg-canvas"></canvas>
-        <div
-            class="w-full max-w-md p-8 space-y-8 bg-white/80 backdrop-blur-sm border border-white/20 rounded-xl shadow-lg text-center relative z-10">
-            <div class="flex justify-center">
-                <div class="bg-blue-600 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg"><i
-                        data-lucide="school-2" class="w-8 h-8"></i></div>
-            </div>
-            <h1 class="text-3xl font-bold text-gray-900">MDS Hub</h1>
-            <p class="text-gray-800 font-medium">武蔵野大学DS学部の“今”がわかる、<br>学生だけのクローズドSNS</p>
-            <button id="login-button"
-                class="w-full flex items-center justify-center gap-3 py-3 px-4 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google aikon"
-                    class="w-6 h-6">
-                <span class="font-medium text-gray-700">Googleでサインイン/サインアップ</span>
-            </button>
-            <p class="text-xs text-gray-600">※ 初回は学籍番号などの登録が必要です。</p>
-        </div>
+  <!-- ログイン画面 -->
+  <div id="login-page" class="flex items-center justify-center min-h-screen relative overflow-hidden">
+    <canvas id="bg-canvas"></canvas>
+    <div
+      class="w-full max-w-md p-8 space-y-8 bg-white/80 backdrop-blur-sm border border-white/20 rounded-xl shadow-lg text-center relative z-10">
+      <div class="flex justify-center">
+        <div class="bg-blue-600 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg"><i
+            data-lucide="school-2" class="w-8 h-8"></i></div>
+      </div>
+      <h1 class="text-3xl font-bold text-gray-900">MDS Hub</h1>
+      <p class="text-gray-800 font-medium">武蔵野大学DS学部の“今”がわかる、<br>学生だけのクローズドSNS</p>
+      <button id="login-button"
+        class="w-full flex items-center justify-center gap-3 py-3 px-4 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google aikon"
+          class="w-6 h-6">
+        <span class="font-medium text-gray-700">Googleでサインイン/サインアップ</span>
+      </button>
+      <p class="text-xs text-gray-600">※ 初回は学籍番号などの登録が必要です。</p>
     </div>
+  </div>
 
-    <!-- メインの掲示板画面 -->
-    <div id="board-page" class="hidden">
-        <header class="bg-white/60 backdrop-blur-lg shadow-md sticky top-0 z-20 border-b border-white/30">
-            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-                <div class="flex items-center gap-2">
-                    <div class="bg-blue-500 text-white w-8 h-8 rounded-md flex items-center justify-center"><i
-                            data-lucide="school-2" class="w-5 h-5"></i></div><span
-                        class="text-xl font-bold text-slate-800 hidden sm:block">MDS Hub</span>
-                </div>
-                <div class="flex-1 max-w-xl mx-4">
-                    <div class="relative">
-                        <i data-lucide="search"
-                            class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-                        <input type="search" id="search-input" placeholder="投稿をキーワード検索..."
-                            class="w-full pl-10 pr-4 py-2 border border-slate-300/50 rounded-full bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700">
-                    </div>
-                </div>
-                <div id="user-profile" class="flex items-center gap-4">
-                    <div class="flex items-center gap-2">
-                        <img id="user-avatar" src="https://placehold.co/40x40/E2E8F0/4A5568?text=U" alt="User Avatar"
-                            class="w-10 h-10 rounded-full">
-                        <div>
-                            <span id="user-name" class="font-semibold text-slate-700">ユーザーID</span>
-                            <div id="user-badge-container" class="flex items-center gap-1 text-xs text-slate-500"><i
-                                    data-lucide="award" class="w-3 h-3"></i><span id="user-badge">バッジ</span></div>
-                        </div>
-                    </div>
-                    <button id="logout-button" class="p-2 rounded-full hover:bg-slate-200/50 transition-colors"><i
-                            data-lucide="log-out" class="w-5 h-5 text-slate-600"></i></button>
-                </div>
-            </div>
-        </header>
-
-        <div class="container mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <aside class="lg:col-span-1">
-                <div class="bg-white/50 backdrop-blur-lg p-4 rounded-2xl shadow-lg border border-white/20">
-                    <h2 class="text-lg font-bold text-slate-800 mb-4">トピック</h2>
-                    <nav>
-                        <ul id="topic-list" class="space-y-2"></ul>
-                    </nav>
-                </div>
-                <div class="bg-white/50 backdrop-blur-lg p-4 rounded-2xl shadow-lg border border-white/20 mt-6">
-                    <h2 class="text-lg font-bold text-slate-800 mb-4">マイページ</h2>
-                    <nav>
-                        <ul>
-                            <li><a href="#" id="my-profile-link"
-                                    class="flex items-center gap-3 p-2 rounded-md hover:bg-slate-200/50 transition-colors text-slate-700"><i
-                                        data-lucide="user" class="w-5 h-5"></i> プロフィール設定</a></li>
-                        </ul>
-                    </nav>
-                </div>
-            </aside>
-            <main class="lg:col-span-3 space-y-6">
-                <form id="post-form"
-                    class="bg-white/50 backdrop-blur-lg p-5 rounded-2xl shadow-lg border border-white/20">
-                    <h2 class="text-lg font-bold text-slate-800 mb-4">新しい投稿</h2>
-                    <div class="flex items-start gap-4"><img id="post-form-avatar"
-                            src="https://placehold.co/40x40/E2E8F0/4A5568?text=U" alt="User Avatar"
-                            class="w-10 h-10 rounded-full">
-                        <div class="w-full"><textarea id="post-textarea" placeholder="今どうしてる？" rows="3"
-                                class="w-full p-3 border border-slate-300/50 rounded-lg bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700"
-                                required></textarea>
-                            <div class="mt-3 flex justify-end"><button id="post-submit-button" type="submit"
-                                    class="bg-blue-500 text-white font-semibold px-6 py-2 rounded-full hover:bg-blue-600 transition-colors shadow-lg">投稿する</button>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-                <div id="posts-container" class="space-y-6"></div>
-            </main>
+  <!-- メインの掲示板画面 -->
+  <div id="board-page" class="hidden">
+    <header class="bg-white/60 backdrop-blur-lg shadow-md sticky top-0 z-20 border-b border-white/30">
+      <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+          <div class="bg-blue-500 text-white w-8 h-8 rounded-md flex items-center justify-center"><i
+              data-lucide="school-2" class="w-5 h-5"></i></div><span
+            class="text-xl font-bold text-slate-800 hidden sm:block">MDS Hub</span>
         </div>
-    </div>
-
-    <!-- モーダルウィンドウ -->
-    <div id="register-modal"
-        class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-lg space-y-6">
-            <h2 class="text-2xl font-bold text-gray-800">ようこそ！</h2>
-            <p class="text-gray-600">快適なコミュニティのため、初回のみプロフィール登録をお願いします。</p>
-            <form id="register-form" class="space-y-4">
-                <div>
-                    <label for="register-term" class="block text-sm font-medium text-gray-700">何期生ですか？</label>
-                    <select id="register-term" name="term" required
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                        <option value="">選択してください</option>
-                        <option value="1">1期生</option>
-                        <option value="2">2期生</option>
-                        <option value="3">3期生</option>
-                        <option value="4">4期生</option>
-                        <option value="5">5期生</option>
-                        <option value="6">6期生</option>
-                        <option value="7">7期生</option>
-                    </select>
-                </div>
-                <div class="pt-4 flex justify-end">
-                    <button type="submit"
-                        class="bg-blue-500 text-white font-semibold px-6 py-2 rounded-full hover:bg-blue-600 transition-colors">登録して始める</button>
-                </div>
-            </form>
+        <div class="flex-1 max-w-xl mx-4">
+          <div class="relative">
+            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+            <input type="search" id="search-input" placeholder="投稿をキーワード検索..."
+              class="w-full pl-10 pr-4 py-2 border border-slate-300/50 rounded-full bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700">
+          </div>
         </div>
-    </div>
-    <div id="user-settings-modal"
-        class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-lg space-y-6">
-            <div class="flex justify-between items-center">
-                <h2 class="text-2xl font-bold text-gray-800">プロフィール設定</h2>
-                <button id="close-settings-button" class="p-2 rounded-full hover:bg-gray-200"><i data-lucide="x"
-                        class="w-6 h-6 text-gray-600"></i></button>
+        <div id="user-profile" class="flex items-center gap-4">
+          <div class="flex items-center gap-2">
+            <img id="user-avatar" src="https://placehold.co/40x40/E2E8F0/4A5568?text=U" alt="User Avatar"
+              class="w-10 h-10 rounded-full">
+            <div>
+              <span id="user-name" class="font-semibold text-slate-700">ユーザーID</span>
+              <div id="user-badge-container" class="flex items-center gap-1 text-xs text-slate-500"><i
+                  data-lucide="award" class="w-3 h-3"></i><span id="user-badge">バッジ</span></div>
             </div>
-            <div class="flex items-center gap-4">
-                <img id="settings-avatar" src="https://placehold.co/80x80/E2E8F0/4A5568?text=U" alt="User Avatar"
-                    class="w-20 h-20 rounded-full">
-                <div>
-                    <h3 id="settings-user-id" class="text-xl font-bold text-gray-800"></h3>
-                    <p id="settings-email" class="text-sm text-gray-500"></p>
-                </div>
-            </div>
-            <div class="grid grid-cols-2 gap-4 text-center">
-                <div class="bg-gray-100 p-4 rounded-lg">
-                    <p class="text-2xl font-bold" id="settings-post-count">0</p>
-                    <p class="text-sm text-gray-600">投稿数</p>
-                </div>
-                <div class="bg-gray-100 p-4 rounded-lg">
-                    <p class="text-2xl font-bold" id="settings-likes-count">0</p>
-                    <p class="text-sm text-gray-600">獲得したいいね</p>
-                </div>
-            </div>
-            <form id="edit-profile-form" class="space-y-4">
-                <div>
-                    <label for="edit-term" class="block text-sm font-medium text-gray-700">何期生ですか？</label>
-                    <select id="edit-term" name="term" required
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                        <option value="">選択してください</option>
-                        <option value="1">1期生</option>
-                        <option value="2">2期生</option>
-                        <option value="3">3期生</option>
-                        <option value="4">4期生</option>
-                        <option value="5">5期生</option>
-                        <option value="6">6期生</option>
-                        <option value="7">7期生</option>
-                    </select>
-                </div>
-                <div class="pt-4 flex justify-end"><button type="submit"
-                        class="bg-blue-500 text-white font-semibold px-6 py-2 rounded-full hover:bg-blue-600 transition-colors">変更を保存</button>
-                </div>
-            </form>
+          </div>
+          <button id="logout-button" class="p-2 rounded-full hover:bg-slate-200/50 transition-colors"><i
+              data-lucide="log-out" class="w-5 h-5 text-slate-600"></i></button>
         </div>
+      </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <aside class="lg:col-span-1">
+        <div class="bg-white/50 backdrop-blur-lg p-4 rounded-2xl shadow-lg border border-white/20">
+          <h2 class="text-lg font-bold text-slate-800 mb-4">トピック</h2>
+          <nav>
+            <ul id="topic-list" class="space-y-2"></ul>
+          </nav>
+        </div>
+        <div class="bg-white/50 backdrop-blur-lg p-4 rounded-2xl shadow-lg border border-white/20 mt-6">
+          <h2 class="text-lg font-bold text-slate-800 mb-4">マイページ</h2>
+          <nav>
+            <ul>
+              <li><a href="#" id="my-profile-link"
+                  class="flex items-center gap-3 p-2 rounded-md hover:bg-slate-200/50 transition-colors text-slate-700"><i
+                    data-lucide="user" class="w-5 h-5"></i> プロフィール設定</a></li>
+            </ul>
+          </nav>
+        </div>
+      </aside>
+      <main class="lg:col-span-3 space-y-6">
+        <form id="post-form" class="bg-white/50 backdrop-blur-lg p-5 rounded-2xl shadow-lg border border-white/20">
+          <h2 class="text-lg font-bold text-slate-800 mb-4">新しい投稿</h2>
+          <div class="flex items-start gap-4"><img id="post-form-avatar"
+              src="https://placehold.co/40x40/E2E8F0/4A5568?text=U" alt="User Avatar" class="w-10 h-10 rounded-full">
+            <div class="w-full"><textarea id="post-textarea" placeholder="今どうしてる？" rows="3"
+                class="w-full p-3 border border-slate-300/50 rounded-lg bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700"
+                required maxlength="1000"></textarea>
+              <div class="mt-3 flex justify-end"><button id="post-submit-button" type="submit"
+                  class="bg-blue-500 text-white font-semibold px-6 py-2 rounded-full hover:bg-blue-600 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">投稿する</button>
+              </div>
+            </div>
+          </div>
+        </form>
+        <div id="posts-container" class="space-y-6"></div>
+      </main>
     </div>
+  </div>
 
-    <!-- Firebase SDK の読み込みとJavaScript -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithRedirect, signInWithPopup, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  <!-- モーダルウィンドウ -->
+  <div id="register-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-lg space-y-6">
+      <h2 class="text-2xl font-bold text-gray-800">ようこそ！</h2>
+      <p class="text-gray-600">快適なコミュニティのため、初回のみプロフィール登録をお願いします。</p>
+      <form id="register-form" class="space-y-4">
+        <div>
+          <label for="register-term" class="block text-sm font-medium text-gray-700">何期生ですか？</label>
+          <select id="register-term" name="term" required
+            class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            <option value="">選択してください</option>
+            <option value="1">1期生</option>
+            <option value="2">2期生</option>
+            <option value="3">3期生</option>
+            <option value="4">4期生</option>
+            <option value="5">5期生</option>
+            <option value="6">6期生</option>
+            <option value="7">7期生</option>
+          </select>
+        </div>
+        <div class="pt-4 flex justify-end">
+          <button type="submit"
+            class="bg-blue-500 text-white font-semibold px-6 py-2 rounded-full hover:bg-blue-600 transition-colors">登録して始める</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div id="user-settings-modal"
+    class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-lg space-y-6">
+      <div class="flex justify-between items-center">
+        <h2 class="text-2xl font-bold text-gray-800">プロフィール設定</h2>
+        <button id="close-settings-button" class="p-2 rounded-full hover:bg-gray-200"><i data-lucide="x"
+            class="w-6 h-6 text-gray-600"></i></button>
+      </div>
+      <div class="flex items-center gap-4">
+        <img id="settings-avatar" src="https://placehold.co/80x80/E2E8F0/4A5568?text=U" alt="User Avatar"
+          class="w-20 h-20 rounded-full">
+        <div>
+          <h3 id="settings-user-id" class="text-xl font-bold text-gray-800"></h3>
+          <p id="settings-email" class="text-sm text-gray-500"></p>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4 text-center">
+        <div class="bg-gray-100 p-4 rounded-lg">
+          <p class="text-2xl font-bold" id="settings-post-count">0</p>
+          <p class="text-sm text-gray-600">投稿数</p>
+        </div>
+        <div class="bg-gray-100 p-4 rounded-lg">
+          <p class="text-2xl font-bold" id="settings-likes-count">0</p>
+          <p class="text-sm text-gray-600">獲得したいいね</p>
+        </div>
+      </div>
+      <form id="edit-profile-form" class="space-y-4">
+        <div>
+          <label for="edit-term" class="block text-sm font-medium text-gray-700">何期生ですか？</label>
+          <select id="edit-term" name="term" required
+            class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            <option value="">選択してください</option>
+            <option value="1">1期生</option>
+            <option value="2">2期生</option>
+            <option value="3">3期生</option>
+            <option value="4">4期生</option>
+            <option value="5">5期生</option>
+            <option value="6">6期生</option>
+            <option value="7">7期生</option>
+          </select>
+        </div>
+        <div class="pt-4 flex justify-end"><button type="submit"
+            class="bg-blue-500 text-white font-semibold px-6 py-2 rounded-full hover:bg-blue-600 transition-colors">変更を保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-        // 【重要】バックエンドサーバーのURL
-        const API_BASE_URL = "http://127.0.0.1:8000";
+  <!-- Firebase SDK の読み込みとJavaScript -->
+  <script type="module">
+    import {initializeApp} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import {getAuth, GoogleAuthProvider, signInWithRedirect, signInWithPopup, getRedirectResult, signOut, onAuthStateChanged} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDlSosYUJpH0eLXNv8xLGGlqUh-pC0NkVc",
-            authDomain: "campus-sns-musashino.firebaseapp.com",
-            projectId: "campus-sns-musashino",
-            storageBucket: "campus-sns-musashino.firebasestorage.app",
-            messagingSenderId: "999753644087",
-            appId: "1:999753644087:web:fd6900cd35a5142ac467b2",
-            measurementId: "G-ETDCMRRG4S"
-        };
+    // 【重要】バックエンドサーバーのURL
+    const API_BASE_URL = "http://127.0.0.1:8000";
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
-        provider.setCustomParameters({
-            'hd': 'stu.musashino-u.ac.jp'
+    const firebaseConfig = {
+      apiKey: "AIzaSyDlSosYUJpH0eLXNv8xLGGlqUh-pC0NkVc",
+      authDomain: "campus-sns-musashino.firebaseapp.com",
+      projectId: "campus-sns-musashino",
+      storageBucket: "campus-sns-musashino.firebasestorage.app",
+      messagingSenderId: "999753644087",
+      appId: "1:999753644087:web:fd6900cd35a5142ac467b2",
+      measurementId: "G-ETDCMRRG4S"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+    // provider.setCustomParameters({
+    //   'hd': 'stu.musashino-u.ac.jp'
+    // });
+
+    // DOM要素の取得
+    const loginPage = document.getElementById('login-page');
+    const boardPage = document.getElementById('board-page');
+    const loginButton = document.getElementById('login-button');
+    const logoutButton = document.getElementById('logout-button');
+    const userNameEl = document.getElementById('user-name');
+    const userAvatarEl = document.getElementById('user-avatar');
+    const postFormAvatarEl = document.getElementById('post-form-avatar');
+    const postForm = document.getElementById('post-form');
+    const postTextarea = document.getElementById('post-textarea');
+    const postsContainer = document.getElementById('posts-container');
+    const searchInput = document.getElementById('search-input');
+    const topicList = document.getElementById('topic-list');
+    const myProfileLink = document.getElementById('my-profile-link');
+    const registerModal = document.getElementById('register-modal');
+    const registerForm = document.getElementById('register-form');
+    const userSettingsModal = document.getElementById('user-settings-modal');
+    const closeSettingsButton = document.getElementById('close-settings-button');
+    const editProfileForm = document.getElementById('edit-profile-form');
+
+    let currentUserInfo = null;
+    let allPosts = [];
+    let topics = [];
+    let currentTopic = null;
+
+    // ==================================================
+    // API通信の共通処理
+    // ==================================================
+    const fetchAPI = async (endpoint, options = {}) => {
+      const user = auth.currentUser;
+      if (!user) throw new Error("ユーザーがログインしていません。");
+
+      const idToken = await user.getIdToken(true);
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`,
+        ...options.headers,
+      };
+
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {...options, headers});
+
+      if (!response.ok) {
+        let errorDetail = `サーバーエラー (ステータス: ${response.status})。`;
+        try {
+          const errorData = await response.json();
+          errorDetail = errorData.detail || JSON.stringify(errorData);
+        } catch (e) { /* ignore */}
+        throw new Error(errorDetail);
+      }
+
+      if (response.status === 204) return;
+      return response.json();
+    };
+
+    // ==================================================
+    // ヘルパー関数
+    // ==================================================
+    const generateAnonymousId = () => `User_${Math.random().toString(36).substring(2, 10)}`;
+    const generateAnonymousAvatar = (seed) => {
+      const hashCode = (str) => Array.from(str).reduce((hash, char) => (hash << 5) - hash + char.charCodeAt(0), 0) | 0;
+      const colors = ['2563eb', 'd946ef', 'f97316', '10b981', '6366f1', 'ec4899'];
+      const color = colors[Math.abs(hashCode(seed)) % colors.length];
+      const initials = seed.substring(5, 7).toUpperCase();
+      return `https://placehold.co/64x64/${color}/ffffff?text=${initials}&font=inter`;
+    };
+    const getTermName = (termValue) => termValue ? `${termValue}期生` : '';
+
+    // ==================================================
+    // UI更新
+    // ==================================================
+    const updateUserUI = () => {
+      if (!currentUserInfo) return;
+      userNameEl.textContent = currentUserInfo.anonymous_id;
+      userAvatarEl.src = currentUserInfo.photoURL;
+      postFormAvatarEl.src = currentUserInfo.photoURL;
+    };
+
+    // ==================================================
+    // トピック機能
+    // ==================================================
+    const initializeAndRenderTopics = async () => {
+      try {
+        const fetchedTopics = await fetchAPI('/api/topics');
+        const commonTopics = fetchedTopics.filter(t => !t.name.includes('期生'));
+        const termTopics = fetchedTopics.filter(t => t.name.includes('期生'));
+
+        let visibleTopics = [...commonTopics];
+        const userTermName = getTermName(currentUserInfo.term);
+        const userTermTopic = termTopics.find(t => t.name === userTermName);
+        if (userTermTopic) {
+          visibleTopics.unshift(userTermTopic);
+        }
+
+        topics = fetchedTopics; // 全てのトピックを保持
+        renderTopics(visibleTopics); // 表示は絞り込む
+
+        if (!currentTopic || !visibleTopics.some(t => t.topic_id === currentTopic.topic_id)) {
+          currentTopic = visibleTopics.find(t => t.name === '全体雑談') || visibleTopics[0];
+        }
+        updateActiveTopic();
+        await loadPostsForCurrentTopic();
+      } catch (error) {
+        alert(`トピックの読み込みに失敗しました: ${error.message}`);
+      }
+    };
+    const renderTopics = (topicsToRender) => {
+      topicList.innerHTML = '';
+      topicsToRender.forEach(topic => {
+        const li = document.createElement('li');
+        li.innerHTML = `<a href="#" data-topic-id="${topic.topic_id}" class="flex items-center gap-3 p-2 rounded-md hover:bg-slate-200/50 transition-colors text-slate-700"><i data-lucide="hash" class="w-4 h-4"></i> ${topic.name}</a>`;
+        topicList.appendChild(li);
+      });
+      lucide.createIcons({nodes: topicList.querySelectorAll('a')});
+    };
+    const updateActiveTopic = () => {
+      topicList.querySelectorAll('a').forEach(link => {
+        link.classList.remove('bg-blue-100', 'text-blue-700', 'font-semibold');
+        link.classList.add('text-slate-700');
+      });
+      if (currentTopic) {
+        const activeLink = topicList.querySelector(`[data-topic-id="${currentTopic.topic_id}"]`);
+        if (activeLink) {
+          activeLink.classList.add('bg-blue-100', 'text-blue-700', 'font-semibold');
+          activeLink.classList.remove('text-slate-700');
+          postTextarea.placeholder = `今どうしてる？ (#${currentTopic.name})`;
+        }
+      }
+    };
+    topicList.addEventListener('click', (e) => {
+      e.preventDefault();
+      const targetLink = e.target.closest('a');
+      if (targetLink && targetLink.dataset.topicId) {
+        const topicId = parseInt(targetLink.dataset.topicId);
+        currentTopic = topics.find(t => t.topic_id === topicId);
+        updateActiveTopic();
+        loadPostsForCurrentTopic();
+      }
+    });
+
+    // ==================================================
+    // 掲示板機能
+    // ==================================================
+    const loadPostsForCurrentTopic = async () => {
+      if (!currentTopic) return;
+      try {
+        const posts = await fetchAPI(`/api/posts?topic_id=${currentTopic.topic_id}`);
+        allPosts = posts;
+        renderPosts();
+      } catch (error) {
+        alert(`投稿の読み込みに失敗しました: ${error.message}`);
+      }
+    };
+
+    const renderPosts = () => {
+      postsContainer.innerHTML = '';
+      const searchTerm = searchInput.value.toLowerCase();
+      const filteredPosts = allPosts.filter(post =>
+        searchTerm === '' ||
+        post.contents.toLowerCase().includes(searchTerm) ||
+        post.user.anonymous_id.toLowerCase().includes(searchTerm)
+      );
+
+      if (filteredPosts.length === 0) {
+        postsContainer.innerHTML = `<div class="bg-white/50 backdrop-blur-lg p-10 rounded-2xl shadow-lg border border-white/20 text-center text-slate-500">このトピックにはまだ投稿がありません。</div>`;
+      } else {
+        filteredPosts.forEach(post => postsContainer.appendChild(createPostElement(post)));
+        // 全ての投稿が追加された後にLucideアイコンを一括初期化
+        lucide.createIcons({nodes: postsContainer.querySelectorAll('[data-post-id]')});
+
+        // いいね状態のハートアイコンのスタイル調整
+        postsContainer.querySelectorAll('[data-user-liked="true"]').forEach(postDiv => {
+          const heartIcon = postDiv.querySelector('[data-lucide="heart"]');
+          if (heartIcon) {
+            heartIcon.style.fill = 'currentColor';
+          }
         });
+      }
+    };
+    const createPostElement = (post) => {
+      const postDiv = document.createElement('div');
+      postDiv.className = 'bg-white/50 backdrop-blur-lg p-5 rounded-2xl shadow-lg border border-white/20';
+      postDiv.dataset.postId = post.post_id;
 
-        // DOM要素の取得
-        const loginPage = document.getElementById('login-page');
-        const boardPage = document.getElementById('board-page');
-        const loginButton = document.getElementById('login-button');
-        const logoutButton = document.getElementById('logout-button');
-        const userNameEl = document.getElementById('user-name');
-        const userAvatarEl = document.getElementById('user-avatar');
-        const postFormAvatarEl = document.getElementById('post-form-avatar');
-        const postForm = document.getElementById('post-form');
-        const postTextarea = document.getElementById('post-textarea');
-        const postsContainer = document.getElementById('posts-container');
-        const searchInput = document.getElementById('search-input');
-        const topicList = document.getElementById('topic-list');
-        const myProfileLink = document.getElementById('my-profile-link');
-        const registerModal = document.getElementById('register-modal');
-        const registerForm = document.getElementById('register-form');
-        const userSettingsModal = document.getElementById('user-settings-modal');
-        const closeSettingsButton = document.getElementById('close-settings-button');
-        const editProfileForm = document.getElementById('edit-profile-form');
-
-        let currentUserInfo = null;
-        let allPosts = [];
-        let topics = [];
-        let currentTopic = null;
-
-        // ==================================================
-        // API通信の共通処理
-        // ==================================================
-        const fetchAPI = async (endpoint, options = {}) => {
-            const user = auth.currentUser;
-            if (!user) throw new Error("ユーザーがログインしていません。");
-
-            const idToken = await user.getIdToken(true);
-            const headers = {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${idToken}`,
-                ...options.headers,
-            };
-
-            const response = await fetch(`${API_BASE_URL}${endpoint}`, { ...options, headers });
-
-            if (!response.ok) {
-                let errorDetail = `サーバーエラー (ステータス: ${response.status})。`;
-                try {
-                    const errorData = await response.json();
-                    errorDetail = errorData.detail || JSON.stringify(errorData);
-                } catch (e) { /* ignore */ }
-                throw new Error(errorDetail);
-            }
-
-            if (response.status === 204) return;
-            return response.json();
-        };
-
-        // ==================================================
-        // ヘルパー関数
-        // ==================================================
-        const generateAnonymousId = () => `User_${Math.random().toString(36).substring(2, 10)}`;
-        const generateAnonymousAvatar = (seed) => {
-            const hashCode = (str) => Array.from(str).reduce((hash, char) => (hash << 5) - hash + char.charCodeAt(0), 0) | 0;
-            const colors = ['2563eb', 'd946ef', 'f97316', '10b981', '6366f1', 'ec4899'];
-            const color = colors[Math.abs(hashCode(seed)) % colors.length];
-            const initials = seed.substring(5, 7).toUpperCase();
-            return `https://placehold.co/64x64/${color}/ffffff?text=${initials}&font=inter`;
-        };
-        const getTermName = (termValue) => termValue ? `${termValue}期生` : '';
-
-        // ==================================================
-        // UI更新
-        // ==================================================
-        const updateUserUI = () => {
-            if (!currentUserInfo) return;
-            userNameEl.textContent = currentUserInfo.anonymous_id;
-            userAvatarEl.src = currentUserInfo.photoURL;
-            postFormAvatarEl.src = currentUserInfo.photoURL;
-        };
-
-        // ==================================================
-        // トピック機能
-        // ==================================================
-        const initializeAndRenderTopics = async () => {
-            try {
-                const fetchedTopics = await fetchAPI('/api/topics');
-                const commonTopics = fetchedTopics.filter(t => !t.name.includes('期生'));
-                const termTopics = fetchedTopics.filter(t => t.name.includes('期生'));
-
-                let visibleTopics = [...commonTopics];
-                const userTermName = getTermName(currentUserInfo.term);
-                const userTermTopic = termTopics.find(t => t.name === userTermName);
-                if (userTermTopic) {
-                    visibleTopics.unshift(userTermTopic);
-                }
-
-                topics = fetchedTopics; // 全てのトピックを保持
-                renderTopics(visibleTopics); // 表示は絞り込む
-
-                if (!currentTopic || !visibleTopics.some(t => t.topic_id === currentTopic.topic_id)) {
-                    currentTopic = visibleTopics.find(t => t.name === '全体雑談') || visibleTopics[0];
-                }
-                updateActiveTopic();
-                await loadPostsForCurrentTopic();
-            } catch (error) {
-                alert(`トピックの読み込みに失敗しました: ${error.message}`);
-            }
-        };
-        const renderTopics = (topicsToRender) => {
-            topicList.innerHTML = '';
-            topicsToRender.forEach(topic => {
-                const li = document.createElement('li');
-                li.innerHTML = `<a href="#" data-topic-id="${topic.topic_id}" class="flex items-center gap-3 p-2 rounded-md hover:bg-slate-200/50 transition-colors text-slate-700"><i data-lucide="hash" class="w-4 h-4"></i> ${topic.name}</a>`;
-                topicList.appendChild(li);
-            });
-            lucide.createIcons({ nodes: topicList.querySelectorAll('a') });
-        };
-        const updateActiveTopic = () => {
-            topicList.querySelectorAll('a').forEach(link => {
-                link.classList.remove('bg-blue-100', 'text-blue-700', 'font-semibold');
-                link.classList.add('text-slate-700');
-            });
-            if (currentTopic) {
-                const activeLink = topicList.querySelector(`[data-topic-id="${currentTopic.topic_id}"]`);
-                if (activeLink) {
-                    activeLink.classList.add('bg-blue-100', 'text-blue-700', 'font-semibold');
-                    activeLink.classList.remove('text-slate-700');
-                    postTextarea.placeholder = `今どうしてる？ (#${currentTopic.name})`;
-                }
-            }
-        };
-        topicList.addEventListener('click', (e) => {
-            e.preventDefault();
-            const targetLink = e.target.closest('a');
-            if (targetLink && targetLink.dataset.topicId) {
-                const topicId = parseInt(targetLink.dataset.topicId);
-                currentTopic = topics.find(t => t.topic_id === topicId);
-                updateActiveTopic();
-                loadPostsForCurrentTopic();
-            }
-        });
-
-        // ==================================================
-        // 掲示板機能
-        // ==================================================
-        const loadPostsForCurrentTopic = async () => {
-            if (!currentTopic) return;
-            try {
-                const posts = await fetchAPI(`/api/posts?topic_id=${currentTopic.topic_id}`);
-                allPosts = posts;
-                renderPosts();
-            } catch (error) {
-                alert(`投稿の読み込みに失敗しました: ${error.message}`);
-            }
-        };
-
-        const renderPosts = () => {
-            postsContainer.innerHTML = '';
-            const searchTerm = searchInput.value.toLowerCase();
-            const filteredPosts = allPosts.filter(post =>
-                searchTerm === '' ||
-                post.contents.toLowerCase().includes(searchTerm) ||
-                post.user.anonymous_id.toLowerCase().includes(searchTerm)
-            );
-
-            if (filteredPosts.length === 0) {
-                postsContainer.innerHTML = `<div class="bg-white/50 backdrop-blur-lg p-10 rounded-2xl shadow-lg border border-white/20 text-center text-slate-500">このトピックにはまだ投稿がありません。</div>`;
-            } else {
-                filteredPosts.forEach(post => postsContainer.appendChild(createPostElement(post)));
-                lucide.createIcons({ nodes: postsContainer.querySelectorAll('[data-post-id]') });
-
-                postsContainer.querySelectorAll('[data-user-liked="true"]').forEach(postDiv => {
-                    const likeButton = postDiv.querySelector('[data-lucide="heart"]');
-                    if (likeButton) {
-                        likeButton.style.color = 'currentColor';
-                    }
-                });
-            }
-        };
-        const createPostElement = (post) => {
-            const postDiv = document.createElement('div');
-            postDiv.className = 'bg-white/50 backdrop-blur-lg p-5 rounded-2xl shadow-lg border border-white/20';
-            postDiv.dataset.postId = post.post_id;
-
-            const deleteButtonHtml = (currentUserInfo && post.user.user_id === currentUserInfo.user_id)
-                ? `<button class="delete-button p-1 rounded-full hover:bg-red-100 text-slate-500 hover:text-red-500 transition-colors">
+      const deleteButtonHtml = (currentUserInfo && post.user.user_id === currentUserInfo.user_id)
+        ? `<button class="delete-button p-1 rounded-full hover:bg-red-100 text-slate-500 hover:text-red-500 transition-colors">
                        <i data-lucide="trash-2" class="w-4 h-4"></i>
                    </button>`
-                : '';
+        : '';
 
-            // ユーザーがいいねしているかをチェック
-            const userLiked = currentUserInfo && post.likes.some(like => like.user_id === currentUserInfo.user_id);
-            const likeButtonClass = userLiked ? 'like-button liked flex items-center gap-2 text-red-500 hover:text-red-500 transition-colors' : 'like-button flex items-center gap-2 text-slate-500 hover:text-red-500 transition-colors';
+      // ユーザーがいいねしているかをチェック
+      const userLiked = currentUserInfo && post.likes.some(like => like.user_id === currentUserInfo.user_id);
+      const likeButtonClass = userLiked ? 'like-button liked flex items-center gap-2 text-red-500 hover:text-red-500 transition-colors' : 'like-button flex items-center gap-2 text-slate-500 hover:text-red-500 transition-colors';
 
-            const commentsHtml = post.comments.map(comment =>
-                `<div class="comment bg-slate-50 p-3 rounded-lg">
+      const commentsHtml = post.comments.map(comment =>
+        `<div class="comment bg-slate-50 p-3 rounded-lg">
           <div class="flex items-center gap-2 mb-2">
             <img src="${generateAnonymousAvatar(comment.user.anonymous_id)}" alt="Avatar" class="w-6 h-6 rounded-full">
             <span class="text-sm font-medium text-slate-700">${comment.user.anonymous_id}</span>
@@ -474,356 +472,379 @@
           </div>
           <p class="text-sm text-slate-700 whitespace-pre-wrap">${comment.content}</p>
         </div>`
-            ).join('');
+      ).join('');
 
-            postDiv.innerHTML = `
-                <div class="flex items-start gap-4">
-                    <img src="${generateAnonymousAvatar(post.user.anonymous_id)}" alt="User Avatar" class="w-10 h-10 rounded-full">
-                    <div class="w-full">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="font-bold text-slate-800">${post.user.anonymous_id}</span>
-                                <span class="text-xs bg-slate-200 text-slate-600 font-medium px-2 py-0.5 rounded-full">${getTermName(post.user.term)}</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs bg-blue-100 text-blue-800 font-medium px-2.5 py-0.5 rounded-full">#${post.topic.name}</span>
-                                ${deleteButtonHtml}
-                            </div>
-                        </div>
-                        <p class="mt-2 text-slate-700 whitespace-pre-wrap">${post.contents}</p>
-                        <div class="mt-4 flex items-center gap-6">
-                            <button class="${likeButtonClass}" data-post-id="${post.post_id}" data-user-liked="${userLiked}">
-                                <i data-lucide="heart" class="w-5 h-5"></i>
-                                <span class="like-count font-medium">${post.likes.length}</span>
-                            </button>
-                            <button class="comment-button flex items-center gap-2 text-slate-500 hover:text-blue-500 transition-colors" data-post-id="${post.post_id}">
-                                <i data-lucide="message-square" class="w-5 h-5"></i>
-                                <span class="comment-count">${post.comments.length}</span>
-                            </button>
-                        </div>
-                        <div class="comments-section mt-4 hidden">
-                            <div class="comments-list space-y-3">
-                                ${commentsHtml}
-                            </div>
-                            <div class="comment-form mt-3 flex gap-2">
-                                <input type="text" class="comment-input flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="コメントを入力..." maxlength="500">
-                                <button class="comment-submit-btn bg-blue-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" data-post-id="${post.post_id}">送信</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            if (userLiked) {
-                postDiv.dataset.userLiked = 'true';
-            }
+      postDiv.innerHTML = `
+        <div class="flex items-start gap-4">
+          <img src="${generateAnonymousAvatar(post.user.anonymous_id)}" alt="User Avatar" class="w-10 h-10 rounded-full">
+          <div class="w-full">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-800">${post.user.anonymous_id}</span>
+                <span class="text-xs bg-slate-200 text-slate-600 font-medium px-2 py-0.5 rounded-full">${getTermName(post.user.term)}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs bg-blue-100 text-blue-800 font-medium px-2.5 py-0.5 rounded-full">#${post.topic.name}</span>
+                ${deleteButtonHtml}
+              </div>
+            </div>
+            <p class="mt-2 text-slate-700 whitespace-pre-wrap">${post.contents}</p>
+            <div class="mt-4 flex items-center gap-6">
+              <button class="${likeButtonClass}" data-post-id="${post.post_id}" data-liked="${userLiked}">
+                <i data-lucide="heart" class="w-5 h-5 ${userLiked ? 'fill-red-500' : ''}"></i>
+                <span class="like-count font-medium">${post.likes.length}</span>
+              </button>
+              <button class="comment-button flex items-center gap-2 text-slate-500 hover:text-blue-500 transition-colors" data-post-id="${post.post_id}">
+                <i data-lucide="message-square" class="w-5 h-5"></i>
+                <span class="comment-count">${post.comments.length}</span>
+              </button>
+            </div>
+            <div class="comments-section mt-4 hidden">
+              <div class="comments-list space-y-3">
+                ${commentsHtml}
+              </div>
+              <div class="comment-form mt-3 flex gap-2">
+                <input type="text" class="comment-input flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="コメントを入力..." maxlength="500">
+                <button class="comment-submit-btn bg-blue-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" data-post-id="${post.post_id}">送信</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
 
-            return postDiv;
-        };
-        postForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const content = postTextarea.value.trim();
-            const submitBtn = postForm.querySelector('#post-submit-button');
+      // いいね状態のスタイル調整用のデータ属性を設定
+      if (userLiked) {
+        postDiv.dataset.userLiked = 'true';
+      }
 
-            if (content && currentUserInfo && currentTopic) {
-                try {
-                    await fetchAPI('/api/posts', {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            contents: content,
-                            user_id: currentUserInfo.user_id,
-                            topic_id: currentTopic.topic_id
-                        })
-                    });
-                    postTextarea.value = '';
-                    await loadPostsForCurrentTopic();
-                } catch (error) {
-                    alert(`投稿に失敗しました: ${error.message}`);
-                }
-            }
-        });
+      return postDiv;
+    };
+    postForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const content = postTextarea.value.trim();
+      const submitBtn = postForm.querySelector('#post-submit-button');
 
-        postsContainer.addEventListener('click', async (e) => {
-            if (e.target.closest('.like-button')) {
-                const likeButton = e.target.closest('.like-button');
-                const postId = likeButton.dataset.postId;
+      if (content && currentUserInfo && currentTopic) {
+        if (content.length > 1000) {
+          alert('投稿は1000文字以内で入力してください。');
+          return;
+        }
 
-                try {
-                    const response = await fetchAPI(`/api/posts/${postId}/like`, {
-                        method: 'POST'
-                    });
+        submitBtn.disabled = true;
+        submitBtn.textContent = '投稿中...';
 
-                    await loadPostsForCurrentTopic();
-                } catch (error) {
-                    alert(`いいねに失敗しました: ${error.message}`);
-                }
-            }
+        try {
+          await fetchAPI('/api/posts', {
+            method: 'POST',
+            body: JSON.stringify({
+              contents: content,
+              user_id: currentUserInfo.user_id,
+              topic_id: currentTopic.topic_id
+            })
+          });
+          postTextarea.value = '';
+          await loadPostsForCurrentTopic();
+        } catch (error) {
+          alert(`投稿に失敗しました: ${error.message}`);
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = '投稿する';
+        }
+      }
+    });
 
-            if (e.target.closest('.delete-button')) {
-                const deleteButton = e.target.closest('.delete-button');
-                const postDiv = deleteButton.closest('div[data-post-id]');
-                const postId = postDiv.dataset.postId;
+    // コメント機能・いいね機能のイベントリスナー
+    postsContainer.addEventListener('click', async (e) => {
+      // いいねボタンクリック時
+      if (e.target.closest('.like-button')) {
+        const likeButton = e.target.closest('.like-button');
+        const postId = likeButton.dataset.postId;
 
-                if (confirm('この投稿を削除しますか？')) {
-                    try {
-                        await fetchAPI(`/api/posts/${postId}`, {
-                            method: 'DELETE'
-                        });
-                        postDiv.remove();
-                    } catch (error) {
-                        alert(`投稿の削除に失敗しました: ${error.message}`);
-                    }
-                }
-            }
+        try {
+          const response = await fetchAPI(`/api/posts/${postId}/likes`, {
+            method: 'POST'
+          });
 
-            if (e.target.closest('.comment-button')) {
-                const commentButton = e.target.closest('.comment-button');
-                const postDiv = commentButton.closest('div[data-post-id]');
+          // 投稿リストを再読み込みして最新の状態を反映
+          await loadPostsForCurrentTopic();
+        } catch (error) {
+          alert(`いいねに失敗しました: ${error.message}`);
+        }
+      }
 
-                const commentsSection = postDiv ? postDiv.querySelector('.comments-section') : null;
+      // 投稿削除ボタンクリック時
+      if (e.target.closest('.delete-button')) {
+        const deleteButton = e.target.closest('.delete-button');
+        const postDiv = deleteButton.closest('div[data-post-id]');
+        const postId = postDiv.dataset.postId;
 
-                if (commentsSection) {
-                    commentsSection.classList.toggle('hidden');
-                } else {
-                    console.warn('Comments section not found for this post.');
-                }
-            }
-
-            if (e.target.closest('.comment-submit-btn')) {
-                const submitBtn = e.target.closest('.comment-submit-btn');
-                const postId = submitBtn.dataset.postId;
-                const postDiv = submitBtn.closest('div[data-post-id]');
-                const commentInput = postDiv.querySelector('.comment-input');
-                const commentContent = commentInput.value.trim();
-
-                if (commentContent) {
-                    submitBtn.disabled = true;
-                    try {
-                        await fetchAPI(`/api/posts/${postId}/comments`, {
-                            method: 'POST',
-                            body: JSON.stringify({
-                                content: commentContent,
-                            })
-                        });
-                        commentTextarea.value = '';
-                        await loadPostsForCurrentTopic();
-                    } catch (error) {
-                        alert(`コメントの投稿に失敗しました: ${error.message}`);
-                    } finally {
-                        submitBtn.disabled = false;
-                    }
-                }
-            }
-        });
-
-        // ==================================================
-        // アプリケーションの初期化とログイン状態の監視
-        // ==================================================
-        const initializeAppUI = async () => {
-            loginPage.classList.add('hidden');
-            boardPage.classList.remove('hidden');
-            updateUserUI();
-            await initializeAndRenderTopics();
-        };
-
-        registerForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const term = document.getElementById('register-term').value;
-            if (!term) {
-                alert('期を選択してください。');
-                return;
-            }
-            const anonymousId = generateAnonymousId();
-            try {
-                await fetchAPI('/api/register', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        term: parseInt(term),
-                        anonymous_id: anonymousId,
-                        firebase_uid: auth.currentUser.uid
-                    })
-                });
-
-                const userData = await fetchAPI('/api/users/me');
-                currentUserInfo = { ...currentUserInfo, ...userData };
-                currentUserInfo.photoURL = generateAnonymousAvatar(userData.anonymous_id);
-
-                registerModal.classList.add('hidden');
-                document.body.classList.remove('modal-open');
-                initializeAppUI();
-            } catch (error) {
-                alert(`登録に失敗しました: ${error.message}`);
-            }
-        });
-
-        // リダイレクト後の認証結果を処理
-        const handleRedirectResult = async () => {
-            try {
-                const result = await getRedirectResult(auth);
-                console.log('getRedirectResult:', result);
-                if (result) {
-                    const user = result.user;
-                    const email = user.email;
-                    console.log('Redirect login successful for:', email);
-                    const requiredDomain = "@stu.musashino-u.ac.jp";
-                    if (!email.endsWith(requiredDomain)) {
-                        alert(`武蔵野大学のメールアドレス（...${requiredDomain}）でのみログインできます。`);
-                        await signOut(auth);
-                        return;
-                    }
-                } else {
-                    console.log('No redirect result found');
-                }
-            } catch (error) {
-                console.error('handleRedirectResult error:', error);
-                if (error.code === 'auth/unauthorized-domain') {
-                    alert("認証エラー：このドメインは許可されていません。\nFirebaseコンソールで '127.0.0.1' と 'localhost' を承認済みドメインに追加してください。");
-                } else {
-                    console.error("ログインエラー:", error);
-                    alert(`ログインに失敗しました: ${error.message}`);
-                }
-            }
-        };
-
-        onAuthStateChanged(auth, async (user) => {
-            console.log('=== Auth state changed ===');
-            console.log('User:', user ? {
-                uid: user.uid,
-                email: user.email,
-                displayName: user.displayName
-            } : 'No user');
-
-            if (user) {
-                const email = user.email;
-                const requiredDomain = "@stu.musashino-u.ac.jp";
-                console.log('Checking domain:', email, 'required:', requiredDomain);
-
-                if (!email.endsWith(requiredDomain)) {
-                    console.log('Domain check failed - signing out');
-                    alert(`武蔵野大学のメールアドレス（...${requiredDomain}）でのみログインできます。`);
-                    await signOut(auth);
-                    return;
-                }
-
-                console.log('Domain check passed - fetching user data');
-                //  try {
-                const userData = await fetchAPI('/api/users/me');
-                console.log('User data from API:', userData);
-
-                currentUserInfo = {
-                    uid: user.uid,
-                    email: user.email,
-                    ...userData
-                };
-                console.log('Current user info:', currentUserInfo);
-
-                if (userData.is_registered) {
-                    console.log('User is registered - initializing app UI');
-                    currentUserInfo.photoURL = generateAnonymousAvatar(userData.anonymous_id);
-                    initializeAppUI();
-                } else {
-                    console.log('User is not registered - showing registration modal');
-                    registerModal.classList.remove('hidden');
-                    document.body.classList.add('modal-open');
-                }
-                // } catch (error) {
-                //     console.error("認証またはユーザー情報取得エラー:", error);
-                //     console.error('Error details:', {
-                //         message: error.message,
-                //         stack: error.stack,
-                //         name: error.name
-                //     });
-                //     alert(`エラーが発生しました: ${error.message}`);
-                // signOut(auth);
-                // }
-            } else {
-                console.log('No user - showing login page');
-                currentUserInfo = null;
-                boardPage.classList.add('hidden');
-                loginPage.classList.remove('hidden');
-            }
-        });
-
-        // ページ読み込み時にリダイレクト結果を処理
-        console.log('Page loaded - checking redirect result');
-        handleRedirectResult();
-
-        // loginButton.addEventListener('click', () => {
-        //     console.log('Login button clicked - starting redirect');
-        //     signInWithRedirect(auth, provider);
-        // });
-        loginButton.addEventListener('click', () => {
-            console.log('Login button clicked - trying popup');
-            signInWithPopup(auth, provider)
-                .then((result) => {
-                    console.log('Popup login successful:', result.user.email);
-                })
-                .catch((error) => {
-                    console.error('Popup login failed:', error);
-                });
-        });
-        logoutButton.addEventListener('click', () => signOut(auth));
-
-        // ==================================================
-        // 3D背景アニメーション
-        // ==================================================
-        let scene, camera, renderer, particles;
-        function init3D() {
-            const canvas = document.getElementById('bg-canvas');
-            if (!canvas || renderer) return;
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 300;
-            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-            const particleCount = 5000;
-            const positions = new Float32Array(particleCount * 3);
-            for (let i = 0; i < particleCount * 3; i++) {
-                positions[i] = (Math.random() - 0.5) * 1000;
-            }
-            const geometry = new THREE.BufferGeometry();
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            const material = new THREE.PointsMaterial({
-                color: 0xffffff,
-                size: 1.5,
-                transparent: true,
-                opacity: 0.7
+        if (confirm('この投稿を削除しますか？')) {
+          try {
+            await fetchAPI(`/api/posts/${postId}`, {
+              method: 'DELETE'
             });
-            particles = new THREE.Points(geometry, material);
-            scene.add(particles);
-            window.addEventListener('resize', onWindowResize, false);
-            animate3D();
+            await loadPostsForCurrentTopic();
+          } catch (error) {
+            alert(`投稿の削除に失敗しました: ${error.message}`);
+          }
         }
-        function onWindowResize() {
-            if (!camera || !renderer) return;
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-        function animate3D() {
-            if (loginPage && !loginPage.classList.contains('hidden')) {
-                requestAnimationFrame(animate3D);
-                if (particles) {
-                    particles.rotation.x += 0.0003;
-                    particles.rotation.y += 0.0005;
-                }
-                if (renderer) renderer.render(scene, camera);
-            }
-        }
+      }
 
-        // 3D背景の初期化（ログイン画面でのみ）
-        const initialize3DBackground = () => {
-            const user = auth.currentUser;
-            if (!user) {
-                init3D();
-            }
+      // コメントボタンクリック時
+      if (e.target.closest('.comment-button')) {
+        e.preventDefault();
+        const commentButton = e.target.closest('.comment-button');
+
+        // コメントボタンの親要素から投稿div要素を探す
+        const postDiv = commentButton.closest('div[data-post-id]');
+        console.log('投稿div:', postDiv);
+
+        const commentsSection = postDiv ? postDiv.querySelector('.comments-section') : null;
+        console.log('コメントセクション:', commentsSection);
+
+        if (commentsSection) {
+          commentsSection.classList.toggle('hidden');
+          console.log('コメントセクション切り替え:', !commentsSection.classList.contains('hidden'));
+        } else {
+          console.error('コメントセクションが見つかりません');
+        }
+      }
+
+      // コメント送信ボタンクリック時
+      if (e.target.closest('.comment-submit-btn')) {
+        const submitBtn = e.target.closest('.comment-submit-btn');
+        const postId = submitBtn.dataset.postId;
+        const postDiv = submitBtn.closest('div[data-post-id]');
+        const commentInput = postDiv.querySelector('.comment-input');
+        const content = commentInput.value.trim();
+
+        if (content) {
+          submitBtn.disabled = true;
+          try {
+            await fetchAPI(`/api/posts/${postId}/comments`, {
+              method: 'POST',
+              body: JSON.stringify({content})
+            });
+            commentInput.value = '';
+            await loadPostsForCurrentTopic();
+          } catch (error) {
+            alert(`コメントの投稿に失敗しました: ${error.message}`);
+          } finally {
+            submitBtn.disabled = false;
+          }
+        }
+      }
+    });
+
+    // ==================================================
+    // アプリケーションの初期化とログイン状態の監視
+    // ==================================================
+    const initializeAppUI = async () => {
+      loginPage.classList.add('hidden');
+      boardPage.classList.remove('hidden');
+      updateUserUI();
+      await initializeAndRenderTopics();
+    };
+
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const term = document.getElementById('register-term').value;
+      if (!term) {
+        alert('期を選択してください。');
+        return;
+      }
+      const anonymousId = generateAnonymousId();
+      try {
+        await fetchAPI('/api/register', {
+          method: 'POST',
+          body: JSON.stringify({
+            term: parseInt(term),
+            anonymous_id: anonymousId,
+            firebase_uid: auth.currentUser.uid
+          })
+        });
+
+        const userData = await fetchAPI('/api/users/me');
+        currentUserInfo = {...currentUserInfo, ...userData};
+        currentUserInfo.photoURL = generateAnonymousAvatar(userData.anonymous_id);
+
+        registerModal.classList.add('hidden');
+        document.body.classList.remove('modal-open');
+        initializeAppUI();
+      } catch (error) {
+        alert(`登録に失敗しました: ${error.message}`);
+      }
+    });
+
+    // リダイレクト後の認証結果を処理
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        console.log('getRedirectResult:', result);
+        if (result) {
+          const user = result.user;
+          const email = user.email;
+          console.log('Redirect login successful for:', email);
+          // const requiredDomain = "@stu.musashino-u.ac.jp";
+          // if (!email.endsWith(requiredDomain)) {
+          //   alert(`武蔵野大学のメールアドレス（...${requiredDomain}）でのみログインできます。`);
+          //   await signOut(auth);
+          //   return;
+          // }
+        } else {
+          console.log('No redirect result found');
+        }
+      } catch (error) {
+        console.error('handleRedirectResult error:', error);
+        if (error.code === 'auth/unauthorized-domain') {
+          alert("認証エラー：このドメインは許可されていません。\nFirebaseコンソールで '127.0.0.1' と 'localhost' を承認済みドメインに追加してください。");
+        } else {
+          console.error("ログインエラー:", error);
+          alert(`ログインに失敗しました: ${error.message}`);
+        }
+      }
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+      console.log('=== Auth state changed ===');
+      console.log('User:', user ? {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName
+      } : 'No user');
+
+      if (user) {
+        const email = user.email;
+        // const requiredDomain = "@stu.musashino-u.ac.jp";
+        // console.log('Checking domain:', email, 'required:', requiredDomain);
+        //
+        // if (!email.endsWith(requiredDomain)) {
+        //   console.log('Domain check failed - signing out');
+        //   alert(`武蔵野大学のメールアドレス（...${requiredDomain}）でのみログインできます。`);
+        //   await signOut(auth);
+        //   return;
+        // }
+
+        // console.log('Domain check passed - fetching user data');
+        //  try {
+        const userData = await fetchAPI('/api/users/me');
+        console.log('User data from API:', userData);
+
+        currentUserInfo = {
+          uid: user.uid,
+          email: user.email,
+          ...userData
         };
+        console.log('Current user info:', currentUserInfo);
 
-        // 初期化時に3D背景を設定
-        initialize3DBackground();
+        if (userData.is_registered) {
+          console.log('User is registered - initializing app UI');
+          currentUserInfo.photoURL = generateAnonymousAvatar(userData.anonymous_id);
+          initializeAppUI();
+        } else {
+          console.log('User is not registered - showing registration modal');
+          registerModal.classList.remove('hidden');
+          document.body.classList.add('modal-open');
+        }
+        // } catch (error) {
+        //     console.error("認証またはユーザー情報取得エラー:", error);
+        //     console.error('Error details:', {
+        //         message: error.message,
+        //         stack: error.stack,
+        //         name: error.name
+        //     });
+        //     alert(`エラーが発生しました: ${error.message}`);
+        // signOut(auth);
+        // }
+      } else {
+        console.log('No user - showing login page');
+        currentUserInfo = null;
+        boardPage.classList.add('hidden');
+        loginPage.classList.remove('hidden');
+      }
+    });
 
-        lucide.createIcons();
-    </script>
+    // ページ読み込み時にリダイレクト結果を処理
+    console.log('Page loaded - checking redirect result');
+    handleRedirectResult();
+
+    // loginButton.addEventListener('click', () => {
+    //     console.log('Login button clicked - starting redirect');
+    //     signInWithRedirect(auth, provider);
+    // });
+    loginButton.addEventListener('click', () => {
+      console.log('Login button clicked - trying popup');
+      signInWithPopup(auth, provider)
+        .then((result) => {
+          console.log('Popup login successful:', result.user.email);
+        })
+        .catch((error) => {
+          console.error('Popup login failed:', error);
+        });
+    });
+    logoutButton.addEventListener('click', () => signOut(auth));
+
+    // ==================================================
+    // 3D背景アニメーション
+    // ==================================================
+    let scene, camera, renderer, particles;
+    function init3D() {
+      const canvas = document.getElementById('bg-canvas');
+      if (!canvas || renderer) return;
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.z = 300;
+      renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: true, alpha: true});
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      const particleCount = 5000;
+      const positions = new Float32Array(particleCount * 3);
+      for (let i = 0; i < particleCount * 3; i++) {
+        positions[i] = (Math.random() - 0.5) * 1000;
+      }
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      const material = new THREE.PointsMaterial({
+        color: 0xffffff,
+        size: 1.5,
+        transparent: true,
+        opacity: 0.7
+      });
+      particles = new THREE.Points(geometry, material);
+      scene.add(particles);
+      window.addEventListener('resize', onWindowResize, false);
+      animate3D();
+    }
+    function onWindowResize() {
+      if (!camera || !renderer) return;
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+    function animate3D() {
+      if (loginPage && !loginPage.classList.contains('hidden')) {
+        requestAnimationFrame(animate3D);
+        if (particles) {
+          particles.rotation.x += 0.0003;
+          particles.rotation.y += 0.0005;
+        }
+        if (renderer) renderer.render(scene, camera);
+      }
+    }
+
+    // 3D背景の初期化（ログイン画面でのみ）
+    const initialize3DBackground = () => {
+      const user = auth.currentUser;
+      if (!user) {
+        init3D();
+      }
+    };
+
+    // 初期化時に3D背景を設定
+    initialize3DBackground();
+
+    lucide.createIcons();
+  </script>
 </body>
 
 </html>
