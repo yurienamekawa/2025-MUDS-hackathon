@@ -192,11 +192,8 @@ async def get_current_firebase_user(token: Annotated[str, Depends(oauth2_scheme)
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        print(f"受信したトークン: {token[:50]}...")
         id_token = token
-        print(f"IDトークン（最初の50文字）: {id_token[:50]}...")
         decoded_token = auth.verify_id_token(id_token)
-        print(f"トークン検証成功: uid={decoded_token.get('uid')}")
         return decoded_token
     except Exception as e:
         print(f"トークン検証エラー: {type(e).__name__}: {e}")
@@ -307,7 +304,6 @@ def delete_post(
     
     db.delete(post)
     db.commit()
-    return {"message": "投稿を削除しました。"}
 
 @app.post("/api/posts/{post_id}/comments", status_code=status.HTTP_201_CREATED, response_model=CommentResponse)
 def create_comment(
@@ -316,6 +312,7 @@ def create_comment(
     db: Session = Depends(get_db),
     firebase_user: dict = Depends(get_current_firebase_user)
 ):
+    print(f"Creating comment for post_id={post_id} with content='{content}'")
     user = db.query(User).filter(User.firebase_uid == firebase_user.get("uid")).first()
     if not user:
         raise HTTPException(status_code=404, detail="ユーザーが見つかりません。")
@@ -324,13 +321,15 @@ def create_comment(
     if not post:
         raise HTTPException(status_code=404, detail="投稿が見つかりません。")
     
+    print(f"Creating comment for post_id={post_id} by user_id={user.user_id} with content='{content}'")
+
     new_comment = Comment(content=content, user_id=user.user_id, post_id=post_id)
     db.add(new_comment)
     db.commit()
     db.refresh(new_comment)
-    return new_comment
+    return db.query(Comment).options(joinedload(Comment.user)).filter(Comment.comment_id == new_comment.comment_id).one()
 
-@app.post("/api/posts/{post_id}/likes", status_code=status.HTTP_201_CREATED, response_model=LikeResponse)
+@app.post("/api/posts/{post_id}/like", status_code=status.HTTP_201_CREATED, response_model=LikeResponse)
 def toggle_like(
     post_id: int,
     db: Session = Depends(get_db),
@@ -344,15 +343,15 @@ def toggle_like(
     if not post:
         raise HTTPException(status_code=404, detail="投稿が見つかりません。")
 
-    like = db.query(Like).filter(Like.post_id == post_id, Like.user_id == user.user_id).first()
-    
-    if like:
-        db.delete(like)
+    existing_like = db.query(Like).filter(Like.post_id == post_id, Like.user_id == user.user_id).first()
+
+    if existing_like:
+        db.delete(existing_like)
         db.commit()
-        return {"message": "いいねを取り消しました。"}
-    
-    new_like = Like(user_id=user.user_id, post_id=post_id)
-    db.add(new_like)
-    db.commit()
-    db.refresh(new_like)
-    return new_like
+        return {"message": "いいねを取り消しました。", "liked": False}
+    else:
+        new_like = Like(user_id=user.user_id, post_id=post_id)
+        db.add(new_like)
+        db.commit()
+        db.refresh(new_like)
+        return {"message": "いいねしました。", "liked": True}
