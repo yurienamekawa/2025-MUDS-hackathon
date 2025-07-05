@@ -505,6 +505,79 @@
             }
         });
 
+        postsContainer.addEventListener('click', async (e) => {
+            if (e.target.closest('.like-button')) {
+                const likeButton = e.target.closest('.like-button');
+                const postId = likeButton.dataset.postId;
+
+                try {
+                    const response = await fetchAPI(`/api/posts/${postId}/like`, {
+                        method: 'POST'
+                    });
+
+                    await loadPostsForCurrentTopic();
+                } catch (error) {
+                    alert(`いいねに失敗しました: ${error.message}`);
+                }
+            }
+
+            if (e.target.closest('.delete-button')) {
+                const deleteButton = e.target.closest('.delete-button');
+                const postDiv = deleteButton.closest('div[data-post-id]');
+                const postId = postDiv.dataset.postId;
+
+                if (confirm('この投稿を削除しますか？')) {
+                    try {
+                        await fetchAPI(`/api/posts/${postId}`, {
+                            method: 'DELETE'
+                        });
+                        postDiv.remove();
+                    } catch (error) {
+                        alert(`投稿の削除に失敗しました: ${error.message}`);
+                    }
+                }
+            }
+
+            if (e.target.closest('.comment-button')) {
+                const commentButton = e.target.closest('.comment-button');
+                const postDiv = commentButton.closest('div[data-post-id]');
+
+                const commentsSection = postDiv ? postDiv.querySelector('.comments-section') : null;
+                
+                if (commentsSection) {
+                    commentsSection.classList.toggle('hidden');
+                } else {
+                    console.warn('Comments section not found for this post.');
+                }
+            }
+
+            if (e.target.closest('.comment-submit-btn')) {
+                const submitBtn = e.target.closest('.comment-submit-btn');
+                const postId = submitBtn.dataset.postId;
+                const postDiv = submitBtn.closest('div[data-post-id]');
+                const commentInput = postDiv.querySelector('.comment-input');
+                const commentContent = commentInput.value.trim();
+
+                if (commentContent) {
+                    submitBtn.disabled = true;
+                    try {
+                        await fetchAPI(`/api/posts/${postId}/comments`, {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                content: commentContent,
+                            })
+                        });
+                        commentTextarea.value = '';
+                        await loadPostsForCurrentTopic();
+                    } catch (error) {
+                        alert(`コメントの投稿に失敗しました: ${error.message}`);
+                    } finally {
+                        submitBtn.disabled = false;
+                    }
+                }
+            }
+        });
+
         // ==================================================
         // アプリケーションの初期化とログイン状態の監視
         // ==================================================
@@ -596,25 +669,25 @@
 
                 console.log('Domain check passed - fetching user data');
                 //  try {
-                    const userData = await fetchAPI('/api/users/me');
-                    console.log('User data from API:', userData);
+                const userData = await fetchAPI('/api/users/me');
+                console.log('User data from API:', userData);
 
-                    currentUserInfo = {
-                        uid: user.uid,
-                        email: user.email,
-                        ...userData
-                    };
-                    console.log('Current user info:', currentUserInfo);
+                currentUserInfo = {
+                    uid: user.uid,
+                    email: user.email,
+                    ...userData
+                };
+                console.log('Current user info:', currentUserInfo);
 
-                    if (userData.is_registered) {
-                        console.log('User is registered - initializing app UI');
-                        currentUserInfo.photoURL = generateAnonymousAvatar(userData.anonymous_id);
-                        initializeAppUI();
-                    } else {
-                        console.log('User is not registered - showing registration modal');
-                        registerModal.classList.remove('hidden');
-                        document.body.classList.add('modal-open');
-                    }
+                if (userData.is_registered) {
+                    console.log('User is registered - initializing app UI');
+                    currentUserInfo.photoURL = generateAnonymousAvatar(userData.anonymous_id);
+                    initializeAppUI();
+                } else {
+                    console.log('User is not registered - showing registration modal');
+                    registerModal.classList.remove('hidden');
+                    document.body.classList.add('modal-open');
+                }
                 // } catch (error) {
                 //     console.error("認証またはユーザー情報取得エラー:", error);
                 //     console.error('Error details:', {
@@ -623,7 +696,7 @@
                 //         name: error.name
                 //     });
                 //     alert(`エラーが発生しました: ${error.message}`);
-                    // signOut(auth);
+                // signOut(auth);
                 // }
             } else {
                 console.log('No user - showing login page');
